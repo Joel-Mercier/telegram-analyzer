@@ -12,17 +12,23 @@ export interface UserInfo extends User {
   total: number,
   averageMessagesPerDay: number,
   medianMessagesPerDay: number,
+  averageCharactersPerDay: number,
+  medianCharactersPerDay: number,
 }
 
 class TelegramAnalyzer {
+
+  // Find occurences of substring in string https://gist.github.com/lsauer/2757250
   html?: string
   users: User[] | []
   messages: [{id: string, userId: string, body: string, date: Date}] | []
+  keywords: string[] | []
 
   constructor() {
     this.html = null;
     this.users = [];
     this.messages = [];
+    this.keywords = [];
   }
 
   initialize(html: string) {
@@ -63,19 +69,22 @@ class TelegramAnalyzer {
   getUserInfos() {
     const data = this.users.map((user, index) => {
       const { id, name } = user;
-      const total = this.messages.filter(message => message.userId === user.id).length;
+      const userMessages = this.messages.filter(message => message.userId === id);
+      const total = userMessages.length;
       const days = eachDayOfInterval(
         { start: this.messages[0].date, end: this.messages[this.messages.length - 1].date }
       );
       const messagesPerDay = days.map(day => {
-        return this.messages.filter(message => message.userId === user.id && isSameDay(message.date, day)).length;
+        return userMessages.filter(message => isSameDay(message.date, day)).length;
       });
-      if (user.name === "Hubert MED L 25200") {
-        debugger
-      }
-      const averageMessagesPerDay = this.messages.filter(message => message.userId === user.id).length / days.length;
+      const charactersPerDay = days.map(day => {
+        return userMessages.filter(message => isSameDay(message.date, day)).reduce((sum, message) => sum += message.body.replace( /\s/g, '' ).length, 0);
+      });
+      const averageMessagesPerDay = userMessages.length / days.length;
       const medianMessagesPerDay = this.median(messagesPerDay);
-      return {id, name, total, medianMessagesPerDay, averageMessagesPerDay};
+      const averageCharactersPerDay = userMessages.reduce((sum, message) => sum += message.body.replace( /\s/g, '' ).length, 0) / days.length;
+      const medianCharactersPerDay = this.median(charactersPerDay);
+      return {id, name, total, medianMessagesPerDay, averageMessagesPerDay, averageCharactersPerDay, medianCharactersPerDay};
     });
     return data;
   }
@@ -96,7 +105,7 @@ class TelegramAnalyzer {
       this.users.map(user => {
         dayData[user.name] = this.messages.filter(message => message.userId === user.id && isSameDay(message.date, day)).length;
         return null;
-      })
+      });
       return dayData;
     });
     return data;
@@ -109,6 +118,49 @@ class TelegramAnalyzer {
       return (sorted[middle - 1] + sorted[middle]) / 2;
     }
     return sorted[middle];
+  }
+
+  analyzeKeywords(keywords: string[]) {
+    const data = this.users.map(user => {
+      const { id, name } = user;
+      const userMessages = this.messages.filter(message => message.userId === id);
+      userMessages.map(message => {
+        const keywordOccurences = keywords.map(keyword => {
+          return {name: keyword, value: this.occurrences(message.body.toLowerCase(), keyword.toLowerCase())};
+        });
+        return keywordOccurences;
+      });
+      return {id, name, keywordOccurences};
+    });
+    debugger
+    return data;
+  }
+
+  addKeyword(keyword: string) {
+    this.keywords = [...this.keywords, keyword];
+  }
+
+  removeKeyword(keyword: string) {
+    this.keywords = this.keywords.filter(word => keyword !== word);
+  }
+
+  occurrences(string: string, subString: string, allowOverlapping?: boolean) {
+    string += "";
+    subString += "";
+    if (subString.length <= 0) return (string.length + 1);
+
+    var n = 0,
+      pos = 0,
+      step = allowOverlapping ? 1 : subString.length;
+
+    while (true) {
+      pos = string.indexOf(subString, pos);
+      if (pos >= 0) {
+        ++n;
+        pos += step;
+      } else break;
+    }
+    return n;
   }
 
 

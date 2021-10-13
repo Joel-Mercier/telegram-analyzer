@@ -5,13 +5,12 @@ import UseAnimations from 'react-useanimations';
 import download from 'react-useanimations/lib/download';
 import classNames from 'classnames';
 import { TelegramAnalyzerContext } from '../App';
-import TelegramAnalyzer from '../services/TelegramAnalyzer'
 
 const Dropzone = (): JSX.Element => {
   const fileInputRef = useRef<HTMLInputElement>();
   const dropRef = useRef<HTMLDivElement>();
   const { isOver, onDrop } = useDropZone(dropRef);
-  const { setLoading, setUserMessagesCountData, setUserMessagesPerDayData, setUserInfos } = useContext(TelegramAnalyzerContext);
+  const { telegramAnalyzer, setLoading, setUserMessagesCountData, setUserMessagesPerDayData, setUserInfos } = useContext(TelegramAnalyzerContext);
 
   onDrop((event: any) => {
     event.preventDefault();
@@ -20,7 +19,6 @@ const Dropzone = (): JSX.Element => {
     reader.readAsText(file, "UTF-8");
     reader.onload = (evt) => {
       setLoading(true);
-      const telegramAnalyzer = new TelegramAnalyzer()
       telegramAnalyzer.reset();
       telegramAnalyzer.initialize(evt.target.result);
       setUserMessagesCountData(telegramAnalyzer.getMessagesCountPerUser());
@@ -29,7 +27,7 @@ const Dropzone = (): JSX.Element => {
       setLoading(false);
     }
     reader.onerror = (evt) => {
-      console.log("FileReader error", evt)
+      console.log("FileReader error", evt);
     }
    
   });
@@ -45,7 +43,6 @@ const Dropzone = (): JSX.Element => {
       reader.readAsText(file, "UTF-8");
       reader.onload = (evt) => {
         setLoading(true);
-        const telegramAnalyzer = new TelegramAnalyzer()
         telegramAnalyzer.reset();
         telegramAnalyzer.initialize(evt.target.result);
         setUserMessagesCountData(telegramAnalyzer.getMessagesCountPerUser());
@@ -57,7 +54,7 @@ const Dropzone = (): JSX.Element => {
         console.log("FileReader error", evt)
       }
     }
-  }, [setUserMessagesCountData, setUserMessagesPerDayData, setUserInfos, setLoading]);
+  }, [telegramAnalyzer, setUserMessagesCountData, setUserMessagesPerDayData, setUserInfos, setLoading]);
   
   return (
     <div>

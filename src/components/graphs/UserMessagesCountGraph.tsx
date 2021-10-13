@@ -91,25 +91,29 @@ const UserMessagesCountGraph = () => {
   }, [setActiveIndex]);
  
   return (
-    <ResponsiveContainer width="100%" height={800}>
-      <PieChart width={800} height={800}>
-        <Pie
-          activeIndex={activeIndex}
-          activeShape={renderActiveShape}
-          data={userMessagesCountData}
-          cx={400}
-          cy={400}
-          innerRadius={120}
-          outerRadius={160}
-          dataKey="value"
-          onMouseEnter={onPieEnter}
-        >
-          {userMessagesCountData.map((user, index) => {
-            return <Cell key={index} fill={fillColors[index]} />
-          })}
-        </Pie>
-      </PieChart>
-    </ResponsiveContainer>
+    <>
+      {userMessagesCountData && userMessagesCountData.length > 0 &&
+        <ResponsiveContainer width="100%" height={800}>
+          <PieChart width={800} height={800}>
+            <Pie
+              activeIndex={activeIndex}
+              activeShape={renderActiveShape}
+              data={userMessagesCountData}
+              cx={400}
+              cy={400}
+              innerRadius={120}
+              outerRadius={160}
+              dataKey="value"
+              onMouseEnter={onPieEnter}
+            >
+              {userMessagesCountData.map((user, index) => {
+                return <Cell key={index} fill={fillColors[index]} />
+              })}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+      }
+    </>
   );
 }
 

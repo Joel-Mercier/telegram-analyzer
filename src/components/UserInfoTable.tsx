@@ -1,7 +1,8 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import DataTable, { TableColumn } from 'react-data-table-component';
 import { TelegramAnalyzerContext } from '../App';
 import { UserInfo } from '../services/TelegramAnalyzer';
+import UserInfoTableFilter from './UserInfoTableFilter';
 
 const columns: TableColumn<UserInfo>[] = [
   {
@@ -23,6 +24,18 @@ const columns: TableColumn<UserInfo>[] = [
     sortable: true,
   },
   {
+    id: 'medianCharactersPerDay',
+    name: "Median character count per day",
+    selector: row => row.medianCharactersPerDay,
+    sortable: true,
+  },
+  {
+    id: 'averageCharactersPerDay',
+    name: "Average character count per day",
+    selector: row => row.averageCharactersPerDay,
+    sortable: true,
+  },
+  {
     id: 'total',
     name: 'Total messages',
     selector: row => row.total,
@@ -31,13 +44,29 @@ const columns: TableColumn<UserInfo>[] = [
 ];
 
 const UserInfoTable = () => {
+  const [filterText, setFilterText] = useState<string>('');
+  const [resetPaginationToggle, setResetPaginationToggle] = useState<boolean>(false);
   const { userInfos, loading } = useContext(TelegramAnalyzerContext);
-  console.log(loading)
+  const filteredItems = userInfos.filter(
+		item => item.name && item.name.toLowerCase().includes(filterText.toLowerCase()),
+	);
+  const subHeaderComponentMemo = useMemo(() => {
+		const handleClear = () => {
+			if (filterText) {
+				setResetPaginationToggle(!resetPaginationToggle);
+				setFilterText('');
+			}
+		};
+
+		return (
+			<UserInfoTableFilter onFilter={e => setFilterText(e.currentTarget.value)} onClear={handleClear} filterText={filterText} />
+		);
+	}, [filterText, resetPaginationToggle]);
   return (
     <DataTable
       title={"User infos"}
       columns={columns}
-      data={userInfos}
+      data={filteredItems}
       selectableRows
       defaultSortFieldId={'total'}
       defaultSortAsc={false}
@@ -45,6 +74,8 @@ const UserInfoTable = () => {
       fixedHeader
       fixedHeaderScrollHeight="536px"
       progressPending={loading}
+      subHeader
+			subHeaderComponent={subHeaderComponentMemo}
     />
 
   );
